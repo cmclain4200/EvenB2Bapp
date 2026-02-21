@@ -43,7 +43,7 @@ export default function RequestDetailScreen() {
   const project = store.getProjectById(request.projectId);
   const costCode = store.getCostCodeById(request.costCodeId);
   const approver = request.approvedBy ? store.getUserById(request.approvedBy) : null;
-  const canMarkPurchased = can('project.mark_purchased', request.projectId);
+  const canMarkPurchased = can('po.mark_ordered', request.projectId);
 
   const parsedFinal = parseFloat(finalTotal) || request.estimatedTotal;
   const variance = parsedFinal - request.estimatedTotal;
