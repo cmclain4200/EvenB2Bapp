@@ -2,9 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, SafeAreaView } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useStore } from '../../data/store';
+import { useDataStore, RequestStatus } from '../../src/lib/data-store';
+import { useAuthStore } from '../../src/lib/auth-store';
 import { RequestCard } from '../../components/RequestCard';
-import { RequestStatus } from '../../data/types';
 import { colors, spacing, fontSize, radius } from '../../src/theme/tokens';
 
 const TABS: { key: RequestStatus | 'all'; label: string }[] = [
@@ -17,7 +17,8 @@ const TABS: { key: RequestStatus | 'all'; label: string }[] = [
 
 export default function RequestsListScreen() {
   const [activeTab, setActiveTab] = useState<RequestStatus | 'all'>('all');
-  const store = useStore();
+  const store = useDataStore();
+  const profile = useAuthStore((s) => s.profile);
   const myRequests = store.getMyRequests();
 
   const filtered = useMemo(() => {
@@ -32,7 +33,7 @@ export default function RequestsListScreen() {
         <View>
           <Text style={styles.title}>My Requests</Text>
           <Text style={styles.subtitle}>
-            {store.currentUser.name} · {store.currentUser.role}
+            {profile?.full_name ?? 'My Requests'}
           </Text>
         </View>
         <TouchableOpacity

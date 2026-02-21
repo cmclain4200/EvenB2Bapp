@@ -1,42 +1,67 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { useAuthStore } from '../../src/lib/auth-store';
+import { supabase } from '../../src/lib/supabase';
 import { colors, spacing, radius, fontSize } from '../../src/theme/tokens';
 
-export default function SignInScreen() {
-  const { signIn } = useAuthStore();
+export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSignIn = async () => {
-    if (!email.trim() || !password.trim()) return;
+  const handleReset = async () => {
+    if (!email.trim()) return;
     setError('');
     setLoading(true);
 
-    const result = await signIn(email.trim(), password);
-    if (result.error) {
-      setError(result.error);
-      setLoading(false);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim());
+    setLoading(false);
+
+    if (err) {
+      setError(err.message);
+    } else {
+      setSent(true);
     }
-    // Auth state change in _layout handles navigation
   };
+
+  if (sent) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
+          <View style={styles.logo}>
+            <View style={styles.checkCircle}>
+              <Text style={styles.checkText}>✓</Text>
+            </View>
+            <Text style={styles.title}>Check Your Email</Text>
+            <Text style={styles.subtitle}>
+              We sent a password reset link to {email}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>Back to Sign In</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        {/* Logo */}
         <View style={styles.logo}>
           <View style={styles.logoBox}>
             <Text style={styles.logoText}>E</Text>
           </View>
-          <Text style={styles.title}>Even B2B</Text>
-          <Text style={styles.subtitle}>Purchase Approvals for Construction</Text>
+          <Text style={styles.title}>Reset Password</Text>
+          <Text style={styles.subtitle}>Enter your email to receive a reset link</Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
           <View style={styles.field}>
             <Text style={styles.label}>Email</Text>
@@ -52,18 +77,6 @@ export default function SignInScreen() {
             />
           </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Min. 6 characters"
-              placeholderTextColor={colors.textMuted}
-              secureTextEntry
-            />
-          </View>
-
           {error ? (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{error}</Text>
@@ -72,21 +85,17 @@ export default function SignInScreen() {
 
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSignIn}
+            onPress={handleReset}
             disabled={loading}
             activeOpacity={0.8}
           >
-            <Text style={styles.buttonText}>{loading ? 'Signing in...' : 'Sign In'}</Text>
+            <Text style={styles.buttonText}>{loading ? 'Sending...' : 'Send Reset Link'}</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password')} style={styles.forgotRow}>
-          <Text style={styles.linkBold}>Forgot password?</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => router.push('/(auth)/sign-up')} style={styles.linkRow}>
-          <Text style={styles.linkText}>Don&apos;t have an account? </Text>
-          <Text style={styles.linkBold}>Sign up</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.linkRow}>
+          <Text style={styles.linkText}>Remember your password? </Text>
+          <Text style={styles.linkBold}>Sign in</Text>
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -102,8 +111,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg,
   },
   logoText: { color: colors.white, fontSize: fontSize.lg, fontWeight: '700' },
+  checkCircle: {
+    width: 48, height: 48, borderRadius: 24,
+    backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg,
+  },
+  checkText: { fontSize: fontSize.xl, color: colors.success },
   title: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
-  subtitle: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
+  subtitle: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2, textAlign: 'center', paddingHorizontal: spacing.lg },
   form: { gap: spacing.lg },
   field: { gap: 4 },
   label: { fontSize: fontSize.xs, fontWeight: '600', color: colors.text },
@@ -123,8 +137,7 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: colors.white, fontSize: fontSize.md, fontWeight: '600' },
-  forgotRow: { alignItems: 'center', marginTop: spacing.lg },
-  linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.md },
+  linkRow: { flexDirection: 'row', justifyContent: 'center', marginTop: spacing.lg },
   linkText: { fontSize: fontSize.sm, color: colors.textMuted },
   linkBold: { fontSize: fontSize.sm, color: colors.primary, fontWeight: '600' },
 });

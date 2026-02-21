@@ -3,17 +3,27 @@ import { View, ActivityIndicator } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAuthStore } from '../src/lib/auth-store';
+import { useDataStore } from '../src/lib/data-store';
 import { colors } from '../src/theme/tokens';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
-  const { session, loading, onboarded, initialize } = useAuthStore();
+  const { session, loading, onboarded, organization, initialize } = useAuthStore();
+  const initData = useDataStore((s) => s.initialize);
+  const dataLoading = useDataStore((s) => s.loading);
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     initialize().then(() => setInitialized(true));
   }, [initialize]);
+
+  // Initialize data store when auth is ready and onboarded
+  useEffect(() => {
+    if (initialized && session && onboarded && organization) {
+      initData();
+    }
+  }, [initialized, session, onboarded, organization, initData]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -36,7 +46,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [initialized, session, onboarded, segments, router]);
 
-  if (!initialized) {
+  if (!initialized || (session && onboarded && dataLoading)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg }}>
         <ActivityIndicator size="small" color={colors.primary} />

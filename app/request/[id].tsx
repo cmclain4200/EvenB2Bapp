@@ -6,7 +6,8 @@ import {
 import { useLocalSearchParams, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useStore } from '../../data/store';
+import { useDataStore } from '../../src/lib/data-store';
+import { useAuthStore } from '../../src/lib/auth-store';
 import { StatusChip, UrgencyChip } from '../../components/StatusChip';
 import { colors, spacing, radius, fontSize } from '../../src/theme/tokens';
 
@@ -22,12 +23,14 @@ const CAT: Record<string, string> = {
 
 export default function RequestDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const store = useStore();
+  const store = useDataStore();
+  const can = useAuthStore((s) => s.can);
   const request = store.requests.find((r) => r.id === id);
   const [showPurchaseSheet, setShowPurchaseSheet] = useState(false);
   const [finalTotal, setFinalTotal] = useState('');
   const [purchaseNotes, setPurchaseNotes] = useState('');
   const [receiptUri, setReceiptUri] = useState<string | undefined>();
+  const [submitting, setSubmitting] = useState(false);
 
   if (!request) {
     return (
@@ -40,6 +43,7 @@ export default function RequestDetailScreen() {
   const project = store.getProjectById(request.projectId);
   const costCode = store.getCostCodeById(request.costCodeId);
   const approver = request.approvedBy ? store.getUserById(request.approvedBy) : null;
+  const canMarkPurchased = can('project.mark_purchased', request.projectId);
 
   const parsedFinal = parseFloat(finalTotal) || request.estimatedTotal;
   const variance = parsedFinal - request.estimatedTotal;
@@ -54,12 +58,19 @@ export default function RequestDetailScreen() {
     }
   };
 
-  const handleConfirmPurchase = () => {
-    store.markPurchased(request.id, parsedFinal, receiptUri, purchaseNotes);
-    setShowPurchaseSheet(false);
-    Alert.alert('Marked as Purchased', `${request.poNumber} finalized at ${fmt(parsedFinal)}`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+  const handleConfirmPurchase = async () => {
+    setSubmitting(true);
+    try {
+      await store.markPurchased(request.id, parsedFinal, receiptUri, purchaseNotes);
+      setShowPurchaseSheet(false);
+      Alert.alert('Marked as Purchased', `${request.poNumber} finalized at ${fmt(parsedFinal)}`, [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (err) {
+      Alert.alert('Error', (err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const openPurchaseSheet = () => {
@@ -148,7 +159,7 @@ export default function RequestDetailScreen() {
         )}
 
         {/* Mark Purchased CTA */}
-        {request.status === 'approved' && (
+        {request.status === 'approved' && canMarkPurchased && (
           <View style={{ marginTop: spacing.xl }}>
             <TouchableOpacity
               style={styles.primaryBtn}

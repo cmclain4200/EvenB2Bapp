@@ -6,10 +6,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useStore } from '../data/store';
-import {
-  RequestCategory, NeedBy, UrgencyLevel, DeliveryMethod, LineItem, PurchaseRequest,
-} from '../data/types';
+import { useDataStore, RequestCategory, NeedBy, UrgencyLevel, DeliveryMethod, LineItem, PurchaseRequest } from '../src/lib/data-store';
 import { colors, spacing, radius, fontSize } from '../src/theme/tokens';
 
 const CATEGORIES: { key: RequestCategory; label: string }[] = [
@@ -53,7 +50,7 @@ function emptyLineItem(): LineItemDraft {
 }
 
 export default function CreateRequestScreen() {
-  const store = useStore();
+  const store = useDataStore();
 
   const [projectId, setProjectId] = useState(store.projects[0]?.id ?? '');
   const [vendor, setVendor] = useState('');
@@ -133,13 +130,14 @@ export default function CreateRequestScreen() {
     }
   };
 
-  const handleSubmit = () => {
-    if (!isValid) return;
+  const [submitting, setSubmitting] = useState(false);
 
-    const validItems: LineItem[] = lineItems
+  const handleSubmit = async () => {
+    if (!isValid || submitting) return;
+
+    const validItems = lineItems
       .filter((li) => li.name.trim() && parseFloat(li.qty) > 0 && parseFloat(li.cost) > 0)
       .map((li) => ({
-        id: li.id,
         name: li.name.trim(),
         quantity: parseFloat(li.qty),
         unit: li.unit || 'pcs',
@@ -147,35 +145,34 @@ export default function CreateRequestScreen() {
       }));
 
     addRecentVendor(vendor);
+    setSubmitting(true);
 
-    const request: PurchaseRequest = {
-      id: `r-${Date.now()}`,
-      poNumber: `PO-${2000 + Math.floor(Math.random() * 999)}`,
-      projectId,
-      requesterId: store.currentUser.id,
-      vendor: vendor.trim(),
-      category,
-      costCodeId,
-      lineItems: validItems,
-      estimatedTotal,
-      needBy,
-      urgency,
-      notes: notes.trim(),
-      attachments,
-      receiptAttachments: [],
-      deliveryMethod: delivery,
-      deliveryAddress: delivery === 'delivery'
-        ? store.getProjectById(projectId)?.address
-        : undefined,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const created = await store.addRequest({
+        projectId,
+        vendor: vendor.trim(),
+        category,
+        costCodeId,
+        lineItems: validItems,
+        estimatedTotal,
+        needBy,
+        urgency,
+        notes: notes.trim(),
+        deliveryMethod: delivery,
+        deliveryAddress: delivery === 'delivery'
+          ? store.getProjectById(projectId)?.address
+          : undefined,
+        attachments,
+      });
 
-    store.addRequest(request);
-    Alert.alert('Request Submitted', `${request.poNumber} is pending approval.`, [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+      Alert.alert('Request Submitted', `${created?.poNumber ?? 'Request'} is pending approval.`, [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (err) {
+      Alert.alert('Error', (err as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { PurchaseRequest } from '../data/types';
-import { useStore } from '../data/store';
+import { useDataStore, PurchaseRequest } from '../src/lib/data-store';
 import { StatusChip, UrgencyChip } from './StatusChip';
 import { colors, spacing, radius, fontSize } from '../src/theme/tokens';
 
@@ -31,7 +30,7 @@ function needByColor(needBy: string): string {
 }
 
 export function RequestCard({ request }: { request: PurchaseRequest }) {
-  const project = useStore((s) => s.getProjectById(request.projectId));
+  const project = useDataStore((s) => s.getProjectById(request.projectId));
   const isUrgent = request.urgency === 'urgent' && request.status === 'pending';
 
   return (

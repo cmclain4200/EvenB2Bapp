@@ -1,58 +1,53 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useStore } from '../../data/store';
-import { UserRole } from '../../data/types';
+import { useAuthStore } from '../../src/lib/auth-store';
 import { colors, spacing, radius, fontSize } from '../../src/theme/tokens';
 
-const ROLES: { key: UserRole; label: string; icon: keyof typeof Ionicons.glyphMap; desc: string }[] = [
-  { key: 'worker', label: 'Field Worker', icon: 'construct-outline', desc: 'Mike Torres – creates requests, uploads receipts' },
-  { key: 'manager', label: 'Project Manager', icon: 'checkmark-circle-outline', desc: 'Sarah Chen – approves/rejects requests' },
-  { key: 'admin', label: 'Admin', icon: 'shield-outline', desc: 'Tom Bradley – views everything' },
-];
-
 export default function SettingsScreen() {
-  const store = useStore();
-  const [showDemoControls, setShowDemoControls] = useState(false);
-  const tapCountRef = useRef(0);
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { profile, organization, orgRoles, signOut } = useAuthStore();
 
-  const handleHeaderTap = () => {
-    tapCountRef.current += 1;
-    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
-
-    if (tapCountRef.current >= 3) {
-      tapCountRef.current = 0;
-      setShowDemoControls((prev) => !prev);
-    } else {
-      tapTimerRef.current = setTimeout(() => {
-        tapCountRef.current = 0;
-      }, 500);
-    }
+  const handleSignOut = () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: () => signOut(),
+      },
+    ]);
   };
+
+  const initials = (profile?.full_name || profile?.email || '?')
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header — triple-tap to reveal demo controls */}
-        <TouchableOpacity activeOpacity={1} onPress={handleHeaderTap}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Settings</Text>
-            <Text style={styles.subtitle}>Account & preferences</Text>
-          </View>
-        </TouchableOpacity>
+        <View style={styles.header}>
+          <Text style={styles.title}>Settings</Text>
+          <Text style={styles.subtitle}>Account & preferences</Text>
+        </View>
 
         {/* Current user */}
         <View style={styles.currentCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {store.currentUser.name.split(' ').map((w) => w[0]).join('')}
-            </Text>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.currentName}>{store.currentUser.name}</Text>
-            <Text style={styles.currentRole}>{store.currentUser.email}</Text>
-            <Text style={styles.currentRole}>Role: {capitalize(store.currentUser.role)}</Text>
+            <Text style={styles.currentName}>{profile?.full_name || 'User'}</Text>
+            <Text style={styles.currentRole}>{profile?.email}</Text>
+            {organization && (
+              <Text style={styles.currentRole}>{organization.name}</Text>
+            )}
+            {orgRoles.length > 0 && (
+              <Text style={styles.currentRole}>
+                {orgRoles.map((r) => r.charAt(0).toUpperCase() + r.slice(1)).join(', ')}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -71,44 +66,14 @@ export default function SettingsScreen() {
           <SettingsRow icon="document-text-outline" label="Terms of Service" />
         </View>
 
-        {/* Demo Controls (hidden until triple-tap) */}
-        {showDemoControls && (
-          <>
-            <View style={styles.demoDivider}>
-              <View style={styles.demoDividerLine} />
-              <Text style={styles.demoDividerText}>Demo Controls</Text>
-              <View style={styles.demoDividerLine} />
-            </View>
-
-            <Text style={styles.sectionTitle}>Switch Role</Text>
-            {ROLES.map((r) => {
-              const isActive = store.currentUser.role === r.key;
-              return (
-                <TouchableOpacity
-                  key={r.key}
-                  style={[styles.roleCard, isActive && styles.roleCardActive]}
-                  activeOpacity={0.7}
-                  onPress={() => store.switchRole(r.key)}
-                >
-                  <Ionicons
-                    name={r.icon}
-                    size={24}
-                    color={isActive ? colors.primary : colors.textMuted}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.roleLabel, isActive && { color: colors.primary }]}>{r.label}</Text>
-                    <Text style={styles.roleDesc}>{r.desc}</Text>
-                  </View>
-                  {isActive && <Ionicons name="checkmark-circle" size={22} color={colors.primary} />}
-                </TouchableOpacity>
-              );
-            })}
-          </>
-        )}
+        {/* Sign Out */}
+        <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </TouchableOpacity>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Even B2B v1.0</Text>
-          <Text style={styles.footerText}>All data is local / mock</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -125,10 +90,6 @@ function SettingsRow({ icon, label, value }: { icon: keyof typeof Ionicons.glyph
       <Ionicons name="chevron-forward" size={16} color={colors.border} />
     </TouchableOpacity>
   );
-}
-
-function capitalize(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
 const styles = StyleSheet.create({
@@ -166,22 +127,13 @@ const styles = StyleSheet.create({
   },
   settingsLabel: { fontSize: fontSize.md, color: colors.text },
   settingsValue: { fontSize: fontSize.sm, color: colors.textMuted, marginRight: 4 },
-  demoDivider: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    marginHorizontal: spacing.lg, marginBottom: spacing.lg, marginTop: spacing.sm,
+  signOutBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+    marginHorizontal: spacing.lg, paddingVertical: 14,
+    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.danger,
+    marginBottom: spacing.xl,
   },
-  demoDividerLine: { flex: 1, height: 1, backgroundColor: colors.border },
-  demoDividerText: { fontSize: fontSize.xs, fontWeight: '600', color: colors.textMuted, textTransform: 'uppercase' },
-  roleCard: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
-    backgroundColor: colors.bg, marginHorizontal: spacing.lg, padding: spacing.lg,
-    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.sm,
-  },
-  roleCardActive: {
-    borderColor: colors.primary, backgroundColor: colors.primarySoft,
-  },
-  roleLabel: { fontSize: fontSize.md, fontWeight: '600', color: colors.text },
-  roleDesc: { fontSize: fontSize.sm, color: colors.textMuted },
-  footer: { alignItems: 'center', marginTop: spacing.xl },
+  signOutText: { fontSize: fontSize.md, fontWeight: '600', color: colors.danger },
+  footer: { alignItems: 'center', marginTop: spacing.sm },
   footerText: { fontSize: fontSize.xs, color: colors.textMuted },
 });

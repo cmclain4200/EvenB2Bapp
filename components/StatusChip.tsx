@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { RequestStatus, UrgencyLevel } from '../data/types';
+import { RequestStatus, UrgencyLevel } from '../src/lib/data-store';
 import { colors, radius, fontSize } from '../src/theme/tokens';
 
 const STATUS_STYLES: Record<RequestStatus, { bg: string; text: string; label: string }> = {
