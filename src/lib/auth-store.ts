@@ -41,6 +41,7 @@ interface AuthState {
   signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   claimAccessCode: (code: string) => Promise<{ error?: string; organization?: Organization }>;
+  leaveOrganization: () => Promise<{ error?: string }>;
   can: (permissionKey: string, projectId?: string) => boolean;
   hasOrgRole: (roleName: string) => boolean;
 }
@@ -126,6 +127,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       session: null, user: null, profile: null, onboarded: false,
       organization: null, orgRoles: [], orgPermissions: [], projectBindings: [],
     });
+  },
+
+  leaveOrganization: async () => {
+    const { session } = get();
+    if (!session) return { error: 'Not authenticated' };
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/leave-organization`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) return { error: data.error ?? 'Failed to leave organization' };
+
+      // Reset local state — user goes back to onboarding
+      set({
+        profile: get().profile ? { ...get().profile!, organization_id: null, onboarded: false } : null,
+        onboarded: false,
+        organization: null,
+        orgRoles: [],
+        orgPermissions: [],
+        projectBindings: [],
+      });
+      return {};
+    } catch {
+      return { error: 'Network error' };
+    }
   },
 
   claimAccessCode: async (code) => {

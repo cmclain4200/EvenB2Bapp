@@ -5,7 +5,7 @@ import { useAuthStore } from '../../src/lib/auth-store';
 import { colors, spacing, radius, fontSize } from '../../src/theme/tokens';
 
 export default function SettingsScreen() {
-  const { profile, organization, orgRoles, signOut } = useAuthStore();
+  const { profile, organization, orgRoles, signOut, leaveOrganization } = useAuthStore();
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -16,6 +16,26 @@ export default function SettingsScreen() {
         onPress: () => signOut(),
       },
     ]);
+  };
+
+  const handleLeaveOrg = () => {
+    Alert.alert(
+      'Leave Organization',
+      `Are you sure you want to leave ${organization?.name ?? 'this organization'}? You will need a new access code to rejoin.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await leaveOrganization();
+            if (result.error) {
+              Alert.alert('Error', result.error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const initials = (profile?.full_name || profile?.email || '?')
@@ -65,6 +85,14 @@ export default function SettingsScreen() {
           <SettingsRow icon="chatbubble-outline" label="Contact Support" />
           <SettingsRow icon="document-text-outline" label="Terms of Service" />
         </View>
+
+        {/* Leave Organization */}
+        {organization && (
+          <TouchableOpacity style={styles.leaveOrgBtn} activeOpacity={0.7} onPress={handleLeaveOrg}>
+            <Ionicons name="exit-outline" size={20} color={colors.warning} />
+            <Text style={styles.leaveOrgText}>Leave Organization</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Sign Out */}
         <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.7} onPress={handleSignOut}>
@@ -127,6 +155,13 @@ const styles = StyleSheet.create({
   },
   settingsLabel: { fontSize: fontSize.md, color: colors.text },
   settingsValue: { fontSize: fontSize.sm, color: colors.textMuted, marginRight: 4 },
+  leaveOrgBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+    marginHorizontal: spacing.lg, paddingVertical: 14,
+    borderRadius: radius.lg, borderWidth: 1, borderColor: colors.warning,
+    marginBottom: spacing.md,
+  },
+  leaveOrgText: { fontSize: fontSize.md, fontWeight: '600', color: colors.warning },
   signOutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
     marginHorizontal: spacing.lg, paddingVertical: 14,
