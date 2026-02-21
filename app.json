@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Even B2B",
-    "slug": "EvenB2Bapp",
+    "slug": "even-b2b-53gr64",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,7 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.even.b2b"
+      "bundleIdentifier": "com.even.b2b",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
