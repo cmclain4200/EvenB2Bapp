@@ -313,7 +313,8 @@ export const useDataStore = create<DataState>((set, get) => ({
         sort_order: idx,
       }));
 
-      await supabase.from('line_items').insert(lineItemRows);
+      const { error: liError } = await supabase.from('line_items').insert(lineItemRows);
+      if (liError) throw new Error(liError.message);
     }
 
     await get().refresh();
