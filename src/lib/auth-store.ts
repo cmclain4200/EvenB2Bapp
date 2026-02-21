@@ -58,14 +58,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   projectBindings: [],
 
   initialize: async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
 
-    if (session) {
-      set({ session, user: session.user });
-      await get().refreshPermissions();
+      if (error || !session) {
+        // Invalid or expired refresh token — clear stale session
+        if (error) {
+          console.warn('Session recovery failed, signing out:', error.message);
+          await supabase.auth.signOut();
+        }
+        set({ loading: false });
+      } else {
+        set({ session, user: session.user });
+        await get().refreshPermissions();
+        set({ loading: false });
+      }
+    } catch (err) {
+      console.warn('Auth init error, signing out:', err);
+      await supabase.auth.signOut();
+      set({ loading: false });
     }
-
-    set({ loading: false });
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       set({ session, user: session?.user ?? null });
