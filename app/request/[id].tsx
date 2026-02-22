@@ -284,7 +284,7 @@ export default function RequestDetailScreen() {
               onPress={handleConfirmPurchase}
             >
               <Ionicons name="checkmark-circle" size={22} color="#fff" />
-              <Text style={styles.confirmBtnText}>Confirm Purchase — {fmt(parsedFinal)}</Text>
+              <Text style={styles.confirmBtnText}>Confirm Purchase - {fmt(parsedFinal)}</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

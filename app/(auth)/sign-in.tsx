@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../src/lib/auth-store';
 import { colors, spacing, radius, fontSize } from '../../src/theme/tokens';
@@ -29,10 +29,8 @@ export default function SignInScreen() {
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/* Logo */}
         <View style={styles.logo}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>E</Text>
-          </View>
-          <Text style={styles.title}>Even B2B</Text>
+          <Image source={require('../../assets/approcure-logo.png')} style={styles.logoImg} />
+          <Text style={styles.title}>Approcure</Text>
           <Text style={styles.subtitle}>Purchase Approvals for Construction</Text>
         </View>
 
@@ -97,11 +95,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl },
   logo: { alignItems: 'center', marginBottom: spacing.xxl },
-  logoBox: {
-    width: 48, height: 48, borderRadius: radius.md,
-    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg,
-  },
-  logoText: { color: colors.white, fontSize: fontSize.lg, fontWeight: '700' },
+  logoImg: { width: 48, height: 48, borderRadius: radius.md, marginBottom: spacing.lg },
   title: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 2 },
   form: { gap: spacing.lg },

@@ -101,7 +101,7 @@ export default function SettingsScreen() {
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Even B2B v1.0</Text>
+          <Text style={styles.footerText}>Approcure v1.0</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

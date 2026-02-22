@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import { router } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { colors, spacing, radius, fontSize } from '../../src/theme/tokens';
@@ -55,9 +55,7 @@ export default function ForgotPasswordScreen() {
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.logo}>
-          <View style={styles.logoBox}>
-            <Text style={styles.logoText}>E</Text>
-          </View>
+          <Image source={require('../../assets/approcure-logo.png')} style={styles.logoImg} />
           <Text style={styles.title}>Reset Password</Text>
           <Text style={styles.subtitle}>Enter your email to receive a reset link</Text>
         </View>
@@ -106,11 +104,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl },
   logo: { alignItems: 'center', marginBottom: spacing.xxl },
-  logoBox: {
-    width: 48, height: 48, borderRadius: radius.md,
-    backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg,
-  },
-  logoText: { color: colors.white, fontSize: fontSize.lg, fontWeight: '700' },
+  logoImg: { width: 48, height: 48, borderRadius: radius.md, marginBottom: spacing.lg },
   checkCircle: {
     width: 48, height: 48, borderRadius: 24,
     backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.lg,

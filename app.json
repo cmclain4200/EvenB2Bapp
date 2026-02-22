@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Even B2B",
+    "name": "Approcure",
     "slug": "even-b2b-53gr64",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -37,7 +37,8 @@
     },
     "plugins": [
       "expo-router",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-font"
     ],
     "extra": {
       "router": {},
